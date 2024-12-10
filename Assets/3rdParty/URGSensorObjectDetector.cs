@@ -9,6 +9,7 @@ namespace HKY
     // https://www.hokuyo-aut.co.jp/02sensor/07scanner/download/pdf/URG_SCIP20.pdf
     public class URGSensorObjectDetector : MonoBehaviour
     {
+        public static URGSensorObjectDetector Instance { get; private set; }
 
         [Header("Connection with Sensor")]
         [SerializeField] string ip_address = "192.168.0.10";
@@ -87,6 +88,11 @@ namespace HKY
         public enum DistanceCroppingMethod
         {
             RECT, RADIUS
+        }
+
+        private void Awake()
+        {
+            Instance = this;
         }
 
         public ProcessedObject GetObjectByGuid(Guid guid)
