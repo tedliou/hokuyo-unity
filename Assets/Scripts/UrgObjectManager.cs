@@ -17,11 +17,15 @@ public class UrgObjectManager : MonoBehaviour
     public GameObject urgPrefab;
     public GameObject msgObj;
     public int distance;
+    public int offsetY = 270;
     
     private List<UrgObjectData> _updateCoroutines = new List<UrgObjectData>();
 
     private void Start()
     {
+        Application.targetFrameRate = 60;
+        
+        
         URGSensorObjectDetector.OnNewObject += e =>
         {
             _updateCoroutines.Add(new UrgObjectData()
@@ -34,9 +38,12 @@ public class UrgObjectManager : MonoBehaviour
 
         URGSensorObjectDetector.OnLostObject += e =>
         {
-            var target = _updateCoroutines.First(c => c.urgObject == e);
+            var target = _updateCoroutines.FirstOrDefault(c => c.urgObject == e);
+            if (target is null)
+                return;
+            
             target.cancel = true;
-            Debug.Log(target.cancel);
+            // Debug.Log(target.cancel);
         };
     }
 
@@ -44,18 +51,31 @@ public class UrgObjectManager : MonoBehaviour
     {
         yield return null;
         
-        //data.instance = Instantiate(urgPrefab);
+        var camPos = new Vector3(0, 0, 10);
+        var urgPos = data.urgObject.position + new Vector3(URGSensorObjectDetector.Instance.detectRectWidth * .5f, 0);
+        data.instance = Instantiate(urgPrefab);
+
         while (!data.cancel)
         {
-            // data.instance.transform.position =
-            //     Camera.main.ScreenToWorldPoint(data.urgObject.position * .1f + new Vector3(960, 0, 10));
+            // while (urgPos.y < offsetY)
+            // {
+            //     data.instance.SetActive(false);
+            //     yield return new WaitForFixedUpdate();
+            // }
+
             
-            // Debug.Log(data.urgObject.position.magnitude);
+            data.instance.SetActive(true);
+
+            urgPos = data.urgObject.position + new Vector3(URGSensorObjectDetector.Instance.detectRectWidth * .5f, 0);
+            var norPos = new Vector3(urgPos.x / URGSensorObjectDetector.Instance.detectRectWidth, (urgPos.y - offsetY) / (URGSensorObjectDetector.Instance.detectRectHeight - offsetY));
+            
+            data.instance.transform.position =
+                Camera.main.ScreenToWorldPoint(new Vector3(Screen.width * norPos.x, Screen.height * norPos.y) + camPos);
             
             yield return new WaitForFixedUpdate();
         }
         
-        //Destroy(data.instance);
+        Destroy(data.instance);
         _updateCoroutines.Remove(data);
     }
 
